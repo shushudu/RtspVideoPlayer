@@ -21,13 +21,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    //инициализация библиотеки FFMPEG
-    av_register_all();
-    avdevice_register_all();
-    avcodec_register_all();
-    avformat_network_init();
-
-
+//    av_register_all();
+//    avdevice_register_all();
+//    avcodec_register_all();
+//    avformat_network_init();
 
     createCamera("rtsp://:8554/test");
 
@@ -42,6 +39,7 @@ void MainWindow::createCamera(const QString & rtsp_url)
     lbl->setWordWrap (true);
     lbl->setStyleSheet("QLabel { background-color : black; color : white; }");
     lbl->setText (rtsp_url);
+    lbl->setMinimumSize(QSize(32,32));
 
     RtspVideoStreamDecoder * rtsp = new RtspVideoStreamDecoder(rtsp_url);
 

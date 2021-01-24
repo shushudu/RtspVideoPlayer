@@ -188,7 +188,7 @@ private:
         RtspVideoStreamDecoder * r = reinterpret_cast <RtspVideoStreamDecoder *> (p);
         if (r->interrupt)
         {
-            LOGFN_ERROR ("return 1");
+            LOGFN_ERROR ("interrupt request sended");
             return 1;
         }
 
@@ -295,16 +295,18 @@ private:
     {
         interrupt = false;
 
-        AVDictionary * format_opts = nullptr;
-        int ret = av_dict_set (&format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
-        assert(ret>=0);
+
 
         AVFormatContext * fc = avformat_alloc_context();
         assert (fc != nullptr);
         fc->interrupt_callback.callback = interruptCallback;
         fc->interrupt_callback.opaque = this;
 
-        ret = avformat_open_input (&fc, rtsp_url.toUtf8 ().constData (), nullptr, &format_opts);
+        AVDictionary * format_opts = nullptr;
+//        int ret = av_dict_set (&format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
+//        assert(ret>=0);
+
+        int ret = avformat_open_input (&fc, rtsp_url.toUtf8 ().constData (), nullptr, &format_opts);
 
         av_dict_free (&format_opts);
 
@@ -317,7 +319,7 @@ private:
 
         assert (fc);
 
-        av_format_inject_global_side_data (fc);
+//        av_format_inject_global_side_data (fc);
 
         return fc;
     }

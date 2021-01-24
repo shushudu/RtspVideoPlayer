@@ -1,11 +1,10 @@
 QT       += core gui widgets
 
-TARGET = RTSPVideoPlayer
+TARGET = RtspVideoPlayer
 
 TEMPLATE = app
 
 PRECOMPILED_HEADER = $$PWD/header.h
-
 
 HEADERS  += mainwindow.h \
         ffmpeghelpers.h \
@@ -20,5 +19,5 @@ SOURCES += main.cpp\
 FORMS += mainwindow.ui
 
 INCLUDEPATH += $$PWD/3rdparty/ffmpeg41x64/include
-LIBS += -L$$PWD/3rdparty/ffmpeg41x64/lib -lavcodec -lswscale -lavformat -lavutil -lavdevice -lavfilter
+LIBS += -L$$PWD/3rdparty/ffmpeg41x64/lib -lavcodec -lswscale -lavformat -lavutil
 LIBS += -L$$PWD/3rdparty/ffmpeg41x64/bin

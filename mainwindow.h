@@ -47,8 +47,6 @@ private slots:
 
     void onRtspNewFrame(AVFrame * frame)
     {
-        LOGFN_INFO("frame received");
-
         AVFrame * toFree = nullptr;
 
         mtx.lock();
@@ -61,8 +59,6 @@ private slots:
             av_frame_unref (toFree);
             av_frame_free (&toFree);
         }
-
-
     }
 
 

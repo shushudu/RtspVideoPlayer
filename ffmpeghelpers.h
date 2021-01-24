@@ -14,7 +14,7 @@ class ffmpeg
 public:
 
 
-    static void dumpAVCodecParameters (AVCodecParameters *avcp)
+    static void dumpAVCodecParameters (AVCodecParameters * avcp)
     {
         assert (avcp);
 
@@ -36,7 +36,7 @@ public:
             assert(0);
         }
 
-        LOGFN_INFO(QString("Video frame: %1x%2").arg(avcp->width).arg(avcp->height));
+//        LOGFN_INFO(QString("Video frame: %1x%2").arg(avcp->width).arg(avcp->height));
 
     }
 
