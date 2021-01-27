@@ -500,7 +500,7 @@ private:
             return false;
         }
 
-        emit infoChanged("receiving frames...");
+        emit infoChanged("");
 
         if(!startReceiveFrames (fc, videoStream, avCtx, err))
         {

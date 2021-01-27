@@ -2,16 +2,8 @@
 
 #include <QLineEdit>
 #include <QPushButton>
-#include <QTimer>
-
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavdevice/avdevice.h>
-#include <libavformat/avformat.h>
-}
 
 #include "logger.h"
-#include "rtspvideostreamdecoder.h"
 #include "rtspwidget.h"
 
 
@@ -23,13 +15,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-//    av_register_all();
-//    avdevice_register_all();
-//    avcodec_register_all();
-//    avformat_network_init();
-
-//    createCamera("rtsp://:8554/test");
-    createCamera("rtsp://admin:admin@192.168.7.71:80/ch0_0.264");
+    createCamera("rtsp://:8554/test");
+//    createCamera("rtsp://admin:admin@192.168.7.71:80/ch0_0.264");
 
     return;
 }
@@ -40,55 +27,60 @@ void MainWindow::createCamera(const QString & rtsp_url)
     rtsp_widget = new RtspWidget(this);
     leRtspUrl = new QLineEdit(this);
     leRtspUrl->setText(rtsp_url);
-    startButton = new QPushButton("Start");
-    stopButton = new QPushButton("Stop");
-    stopButton->hide();
+
+    btnPlay = new QPushButton("Play", this);
+    btnPlay->setCheckable(true);
 
     QVBoxLayout * vl = new QVBoxLayout();
 
-    vl->addWidget(leRtspUrl);
+    QHBoxLayout * hl = new QHBoxLayout();
+
+
+    hl->addWidget(leRtspUrl);
+    hl->addWidget(btnPlay);
+
+    vl->addLayout(hl);
     vl->addWidget(rtsp_widget);
-    vl->addWidget(startButton);
-    vl->addWidget(stopButton);
 
     bool connected = false;
-
-    connected = connect (startButton, &QPushButton::clicked, this, &MainWindow::onStartButtonClicked, Qt::UniqueConnection);
-    assert(connected);
-    connected = connect (stopButton, &QPushButton::clicked, this, &MainWindow::onStopButtonClicked, Qt::UniqueConnection);
-    assert(connected);
-
     connected = connect (rtsp_widget, &RtspWidget::started, this, &MainWindow::onRtspStarted, Qt::UniqueConnection);
     assert(connected);
     connected = connect (rtsp_widget, &RtspWidget::stopped, this, &MainWindow::onRtspStopped, Qt::UniqueConnection);
     assert(connected);
+    connected = connect (btnPlay, &QPushButton::toggled, this, &MainWindow::onPlayButtonToggled, Qt::UniqueConnection);
+    assert(connected);
 
-
-
+    rtsp_widget->setUpdateInterval(50);
 
     ui->camerasLayout->addLayout(vl);
+
 }
 
-void MainWindow::onStartButtonClicked()
+void MainWindow::onPlayButtonToggled(bool checked)
 {
-    rtsp_widget->start(leRtspUrl->text());
-}
-
-void MainWindow::onStopButtonClicked()
-{
-    rtsp_widget->stop();
+    if (checked)
+    {
+        rtsp_widget->start(leRtspUrl->text());
+    }
+    else
+    {
+        rtsp_widget->stop();
+    }
 }
 
 void MainWindow::onRtspStarted()
 {
-    stopButton->show();
-    startButton->hide();
+    leRtspUrl->setDisabled(true);
 }
 
 void MainWindow::onRtspStopped()
 {
-    stopButton->hide();
-    startButton->show();
+    leRtspUrl->setDisabled(false);
+
+    if (btnPlay->isChecked())
+    {
+        rtsp_widget->start(leRtspUrl->text());
+    }
 }
 
 MainWindow::~MainWindow()

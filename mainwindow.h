@@ -4,11 +4,7 @@
 #include "ui_mainwindow.h"
 
 class QPushButton;
-
-#include <QLabel>
-#include <QMutex>
-#include <QTimer>
-
+class QLineEdit;
 class RtspWidget;
 
 namespace Ui {
@@ -26,17 +22,14 @@ public:
 private:
     Ui::MainWindow *ui;
 
-
     RtspWidget * rtsp_widget = nullptr;
     QLineEdit * leRtspUrl = nullptr;
-    QPushButton * startButton = nullptr;
-    QPushButton * stopButton = nullptr;
+    QPushButton * btnPlay = nullptr;
 
     void createCamera(const QString & rtsp);
 
 private slots:
-    void onStartButtonClicked();
-    void onStopButtonClicked();
+    void onPlayButtonToggled(bool checked);
     void onRtspStarted();
     void onRtspStopped();
 };

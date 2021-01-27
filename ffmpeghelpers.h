@@ -35,9 +35,6 @@ public:
         {
             assert(0);
         }
-
-//        LOGFN_INFO(QString("Video frame: %1x%2").arg(avcp->width).arg(avcp->height));
-
     }
 
     static QString av_strerror (int errNum)
