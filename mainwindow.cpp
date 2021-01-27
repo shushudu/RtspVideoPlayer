@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 
+#include <QLineEdit>
 #include <QPushButton>
 #include <QTimer>
 
@@ -11,6 +12,7 @@ extern "C" {
 
 #include "logger.h"
 #include "rtspvideostreamdecoder.h"
+#include "rtspwidget.h"
 
 
 
@@ -26,7 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
 //    avcodec_register_all();
 //    avformat_network_init();
 
-    createCamera("rtsp://:8554/test");
+//    createCamera("rtsp://:8554/test");
+    createCamera("rtsp://admin:admin@192.168.7.71:80/ch0_0.264");
 
     return;
 }
@@ -34,68 +37,58 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::createCamera(const QString & rtsp_url)
 {
-    lbl = new QLabel(this);
-    lbl->setAlignment (Qt::AlignHCenter | Qt::AlignVCenter);
-    lbl->setWordWrap (true);
-    lbl->setStyleSheet("QLabel { background-color : black; color : white; }");
-    lbl->setText (rtsp_url);
-    lbl->setMinimumSize(QSize(32,32));
-
-    RtspVideoStreamDecoder * rtsp = new RtspVideoStreamDecoder(rtsp_url);
-
-    connect(rtsp, &RtspVideoStreamDecoder::finished, this, &MainWindow::onRtspVideoStreamDecoderFinished, Qt::UniqueConnection);
-//    connect(tst, &RtspVideoStreamDecoder::finished, tst, &QObject::deleteLater, Qt::UniqueConnection);
-    connect(rtsp, &RtspVideoStreamDecoder::newFrame, this, &MainWindow::onRtspNewFrame, Qt::UniqueConnection);
-    connect(rtsp, &RtspVideoStreamDecoder::infoChanged, this, &MainWindow::onRtspInfoChanged, Qt::UniqueConnection);
-//    rtsp->start();
-
-
-    checkNewFrameTimer = new QTimer(this);
-    connect(checkNewFrameTimer, &QTimer::timeout, this, &MainWindow::onCheckNewFrameTimerTimeout, Qt::UniqueConnection);
-
-    checkNewFrameTimer->setInterval(200);
-//    checkNewFrameTimer->start();
-
-
-
-
-    QPushButton * startButton = new QPushButton("Start");
-    QPushButton * stopButton = new QPushButton("Stop");
+    rtsp_widget = new RtspWidget(this);
+    leRtspUrl = new QLineEdit(this);
+    leRtspUrl->setText(rtsp_url);
+    startButton = new QPushButton("Start");
+    stopButton = new QPushButton("Stop");
     stopButton->hide();
 
     QVBoxLayout * vl = new QVBoxLayout();
 
-    vl->addWidget(lbl);
+    vl->addWidget(leRtspUrl);
+    vl->addWidget(rtsp_widget);
     vl->addWidget(startButton);
     vl->addWidget(stopButton);
 
-
     bool connected = false;
 
-    connected = connect (startButton, &QPushButton::clicked, rtsp, &RtspVideoStreamDecoder::start, Qt::UniqueConnection);
+    connected = connect (startButton, &QPushButton::clicked, this, &MainWindow::onStartButtonClicked, Qt::UniqueConnection);
     assert(connected);
-    connected = connect (stopButton, &QPushButton::clicked, rtsp, &RtspVideoStreamDecoder::stop, Qt::UniqueConnection);
-    assert(connected);
-
-    connected = connect (rtsp, &RtspVideoStreamDecoder::finished, startButton, &QPushButton::show, Qt::UniqueConnection);
-    assert(connected);
-    connected = connect (rtsp, &RtspVideoStreamDecoder::finished, stopButton, &QPushButton::hide, Qt::UniqueConnection);
+    connected = connect (stopButton, &QPushButton::clicked, this, &MainWindow::onStopButtonClicked, Qt::UniqueConnection);
     assert(connected);
 
-    connected = connect (rtsp, &RtspVideoStreamDecoder::started, startButton, &QPushButton::hide, Qt::UniqueConnection);
+    connected = connect (rtsp_widget, &RtspWidget::started, this, &MainWindow::onRtspStarted, Qt::UniqueConnection);
     assert(connected);
-    connected = connect (rtsp, &RtspVideoStreamDecoder::started, stopButton, &QPushButton::show, Qt::UniqueConnection);
+    connected = connect (rtsp_widget, &RtspWidget::stopped, this, &MainWindow::onRtspStopped, Qt::UniqueConnection);
     assert(connected);
-    connected = connect (rtsp, &RtspVideoStreamDecoder::started, this, &MainWindow::onThreadStarted, Qt::UniqueConnection);
-    assert(connected);
+
+
 
 
     ui->camerasLayout->addLayout(vl);
 }
 
-void MainWindow::onThreadStarted()
+void MainWindow::onStartButtonClicked()
 {
-    checkNewFrameTimer->start();
+    rtsp_widget->start(leRtspUrl->text());
+}
+
+void MainWindow::onStopButtonClicked()
+{
+    rtsp_widget->stop();
+}
+
+void MainWindow::onRtspStarted()
+{
+    stopButton->show();
+    startButton->hide();
+}
+
+void MainWindow::onRtspStopped()
+{
+    stopButton->hide();
+    startButton->show();
 }
 
 MainWindow::~MainWindow()

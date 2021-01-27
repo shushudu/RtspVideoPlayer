@@ -10,11 +10,13 @@ HEADERS  += mainwindow.h \
         ffmpeghelpers.h \
         header.h \
         logger.h \
-        rtspvideostreamdecoder.h
+        rtspvideostreamdecoder.h \
+        rtspwidget.h
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-        rtspvideostreamdecoder.cpp
+        rtspvideostreamdecoder.cpp \
+        rtspwidget.cpp
 
 FORMS += mainwindow.ui
 
