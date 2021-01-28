@@ -4,7 +4,7 @@ TARGET = RtspVideoPlayer
 
 TEMPLATE = app
 
-PRECOMPILED_HEADER = $$PWD/header.h
+#PRECOMPILED_HEADER = $$PWD/header.h
 
 HEADERS  += mainwindow.h \
         ffmpeghelpers.h \

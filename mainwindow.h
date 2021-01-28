@@ -25,10 +25,12 @@ private:
     RtspWidget * rtsp_widget = nullptr;
     QLineEdit * leRtspUrl = nullptr;
     QPushButton * btnPlay = nullptr;
+    QTimer * tmrReconnect = nullptr;
 
     void createCamera(const QString & rtsp);
 
 private slots:
+    void onTmrReconnectTimeout();
     void onPlayButtonToggled(bool checked);
     void onRtspStarted();
     void onRtspStopped();

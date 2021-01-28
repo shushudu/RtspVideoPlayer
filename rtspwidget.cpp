@@ -1,6 +1,7 @@
 #include "rtspwidget.h"
 
 #include <QLabel>
+#include <QTimer>
 
 RtspWidget::RtspWidget(QWidget *parent) : QLabel(parent)
 {
