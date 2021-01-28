@@ -3,17 +3,12 @@
 
 #include <QString>
 #include <QThread>
-#include <assert.h>
 
-extern "C" {
-#include <libavformat/avformat.h>
-#include <libavutil/buffer.h>
-#include <libavutil/imgutils.h>
-#include <libswscale/swscale.h>
-}
-
-#include "ffmpeghelpers.h"
-#include "logger.h"
+struct AVFormatContext;
+struct AVCodecContext;
+struct AVStream;
+struct AVFrame;
+struct AVPacket;
 
 class RtspVideoStreamDecoder: public QThread
 {
@@ -28,14 +23,18 @@ public:
 
     static AVFrame * convertFrame (AVFrame * frame, QString & err);
 
-public slots:
+    static void freeFrame(AVFrame ** frame);
 
+    static QImage toQImage(const AVFrame * const fr, QString & err);
+
+public slots:
     void start();
 
     void stop();
 
 signals:
     void newFrame(AVFrame *);
+
     void infoChanged(QString info);
 
 private:
@@ -55,7 +54,7 @@ private:
 
     bool sendPacketToDecoder(AVCodecContext * avCtx, AVPacket * pck);
 
-    bool test(QString & err);
+    bool openAndStartRtsp(QString & err);
 };
 
 #endif // RTSPVIDEOSTREAMDECODER_H

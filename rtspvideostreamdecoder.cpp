@@ -1,9 +1,8 @@
 #include "rtspvideostreamdecoder.h"
 
-
-
 #include <QString>
 #include <QThread>
+#include <QImage>
 #include <assert.h>
 
 extern "C" {
@@ -19,9 +18,9 @@ extern "C" {
 
 void RtspVideoStreamDecoder::run()
 {
-    QString finishInfoText = "complete";
+    QString finishInfoText = "unknown error";
 
-    if (!test(finishInfoText))
+    if (!openAndStartRtsp(finishInfoText))
     {
         LOGFN_ERROR(finishInfoText);
         emit infoChanged(finishInfoText);
@@ -30,15 +29,15 @@ void RtspVideoStreamDecoder::run()
     {
         emit infoChanged("RTSP stream gracefully closed");
     }
-
-
 }
+
 
 RtspVideoStreamDecoder::RtspVideoStreamDecoder(const QString & rtspUrl):
     rtspUrl(rtspUrl)
 {
 
 }
+
 
 AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * frame, QString & err)
 {
@@ -57,8 +56,6 @@ AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * frame, QString & err)
     {
         return frame;
     }
-
-
 
     AVFrame * rgbFrame = av_frame_alloc ();
     assert(rgbFrame);
@@ -158,15 +155,69 @@ AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * frame, QString & err)
 }
 
 
+void RtspVideoStreamDecoder::freeFrame(AVFrame ** frame)
+{
+    if (frame)
+    {
+        av_frame_unref (*frame);
+        av_frame_free (frame);
+    }
+}
+
+
+QImage RtspVideoStreamDecoder::toQImage(const AVFrame * const fr, QString & err)
+{
+    if(!fr)
+    {
+        err = QString("no frame");
+        return QImage();
+    }
+
+    const int frameFormat = fr->format;
+
+    QImage::Format qif;
+
+    switch (frameFormat)
+    {
+        case AV_PIX_FMT_RGB24:
+            qif = QImage::Format_RGB888;
+            break;
+
+        case AV_PIX_FMT_GRAY8:
+            qif = QImage::Format_Grayscale8;
+            break;
+
+        default:
+        {
+            err = QString("frame format %1 not supported").arg(frameFormat);
+            return QImage();
+        }
+    }
+
+    QImage ret (fr->data[0], fr->width, fr->height, fr->linesize[0], qif);
+
+
+    if(ret.isNull())
+    {
+        err = QString("frame convert from format %1 failed").arg(frameFormat);
+        return ret;
+    }
+
+    return ret;
+}
+
+
 void RtspVideoStreamDecoder::start()
 {
     QThread::start(QThread::NormalPriority);
 }
 
+
 void RtspVideoStreamDecoder::stop()
 {
     interrupt = true;
 }
+
 
 int RtspVideoStreamDecoder::interruptCallback (void * p)
 {
@@ -181,6 +232,7 @@ int RtspVideoStreamDecoder::interruptCallback (void * p)
 
     return 0;
 }
+
 
 AVCodecContext * RtspVideoStreamDecoder::openStream (AVStream * stream, QString & err)
 {
@@ -209,6 +261,7 @@ AVCodecContext * RtspVideoStreamDecoder::openStream (AVStream * stream, QString 
     if (ret < 0)
     {
         err = QString("avcodec_parameters_to_context failed: %1").arg(ffmpeg::av_strerror(ret));
+        avcodec_free_context(&avCtx);
         return nullptr;
     }
 
@@ -225,6 +278,7 @@ AVCodecContext * RtspVideoStreamDecoder::openStream (AVStream * stream, QString 
     {
         err = QString ("avcodec_open2 failed %1").arg (ffmpeg::av_strerror(ret));
         av_dict_free (&opts);
+        avcodec_free_context(&avCtx);
         return nullptr;
     }
 
@@ -233,6 +287,7 @@ AVCodecContext * RtspVideoStreamDecoder::openStream (AVStream * stream, QString 
     {
         err = QString ("codec-private option '%1' not found").arg (t->key);
         av_dict_free (&opts);
+        avcodec_free_context(&avCtx);
         return nullptr;
     }
     av_dict_free (&opts);
@@ -241,6 +296,7 @@ AVCodecContext * RtspVideoStreamDecoder::openStream (AVStream * stream, QString 
 
     return avCtx;
 }
+
 
 AVStream * RtspVideoStreamDecoder::getVideoStream(AVFormatContext * fc, QString & err)
 {
@@ -278,14 +334,18 @@ AVStream * RtspVideoStreamDecoder::getVideoStream(AVFormatContext * fc, QString 
     return videoStream;
 }
 
+
 AVFormatContext * RtspVideoStreamDecoder::openRtsp (const QString & rtsp_url, QString & err)
 {
     interrupt = false;
 
-
-
     AVFormatContext * fc = avformat_alloc_context();
-    assert (fc != nullptr);
+    if (!fc)
+    {
+        err = "avformat_alloc_context failed";
+        return nullptr;
+    }
+
     fc->interrupt_callback.callback = interruptCallback;
     fc->interrupt_callback.opaque = this;
 
@@ -310,6 +370,7 @@ AVFormatContext * RtspVideoStreamDecoder::openRtsp (const QString & rtsp_url, QS
 
     return fc;
 }
+
 
 bool RtspVideoStreamDecoder::startReceiveFrames (AVFormatContext * fc, AVStream * videoStream, AVCodecContext * avCtx, QString & err)
 {
@@ -397,6 +458,7 @@ bool RtspVideoStreamDecoder::startReceiveFrames (AVFormatContext * fc, AVStream 
     return true;
 }
 
+
 bool RtspVideoStreamDecoder::frameFromDecoder(AVCodecContext * avCtx, AVFrame * frame)
 {
     assert (avCtx);
@@ -427,6 +489,7 @@ bool RtspVideoStreamDecoder::frameFromDecoder(AVCodecContext * avCtx, AVFrame * 
 
     return false;
 }
+
 
 bool RtspVideoStreamDecoder::sendPacketToDecoder(AVCodecContext * avCtx, AVPacket * pck)
 {
@@ -459,7 +522,8 @@ bool RtspVideoStreamDecoder::sendPacketToDecoder(AVCodecContext * avCtx, AVPacke
     return false;
 }
 
-bool RtspVideoStreamDecoder::test(QString & err)
+
+bool RtspVideoStreamDecoder::openAndStartRtsp(QString & err)
 {
     err = "";
 
@@ -476,6 +540,7 @@ bool RtspVideoStreamDecoder::test(QString & err)
     AVStream * videoStream = getVideoStream(fc, err);
     if (!videoStream)
     {
+        avformat_close_input(&fc);
         return false;
     }
 
@@ -484,6 +549,7 @@ bool RtspVideoStreamDecoder::test(QString & err)
     AVCodecContext * avCtx = openStream (videoStream, err);
     if(!avCtx)
     {
+        avformat_close_input(&fc);
         return false;
     }
 
@@ -491,8 +557,12 @@ bool RtspVideoStreamDecoder::test(QString & err)
 
     if(!startReceiveFrames (fc, videoStream, avCtx, err))
     {
+        avcodec_free_context(&avCtx);
+        avformat_close_input(&fc);
         return false;
     }
 
+    avcodec_free_context(&avCtx);
+    avformat_close_input(&fc);
     return true;
 }

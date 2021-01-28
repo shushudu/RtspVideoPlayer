@@ -3,6 +3,11 @@
 #include <QLabel>
 #include <QTimer>
 
+extern "C" {
+#include <libavformat/avformat.h>
+}
+
+
 RtspWidget::RtspWidget(QWidget *parent) : QLabel(parent)
 {
     QLabel::setAlignment (Qt::AlignHCenter | Qt::AlignVCenter);
@@ -77,44 +82,30 @@ void RtspWidget::onRtspNewFrame(AVFrame * frame)
 
     if (toFree)
     {
-        av_frame_unref (toFree);
-        av_frame_free (&toFree);
+        RtspVideoStreamDecoder::freeFrame(&toFree);
     }
 }
 
 void RtspWidget::displayFrame (const AVFrame * fr)
 {
-    assert (fr);
+    QString err;
 
-    const int frameFormat = fr->format;
+    QImage img = RtspVideoStreamDecoder::toQImage(fr, err);
 
-    QImage::Format qif;
-
-    switch (frameFormat)
+    if (img.isNull())
     {
-        case AV_PIX_FMT_RGB24:
-            qif = QImage::Format_RGB888;
-            break;
-
-        case AV_PIX_FMT_GRAY8:
-            qif = QImage::Format_Grayscale8;
-            break;
-
-        default:
-        {
-            QLabel::setText("frame format not supported");
-            return;
-        }
+        QLabel::setText(err);
+        return;
     }
 
     QPixmap pixmap;
 
-    bool ret = pixmap.convertFromImage (QImage (fr->data[0], fr->width, fr->height,
-                             fr->linesize[0], qif));
+    bool ret = pixmap.convertFromImage (img.scaled(QLabel::size (), Qt::KeepAspectRatio));
 
     assert(ret);
 
-    QLabel::setPixmap (pixmap.scaled (QLabel::size (), Qt::KeepAspectRatio));
+
+    QLabel::setPixmap (pixmap);
 }
 
 void RtspWidget::onCheckNewFrameTimerTimeout()
@@ -138,14 +129,12 @@ void RtspWidget::onCheckNewFrameTimerTimeout()
 
         if (convertedFrame != toShow)
         {
-            av_frame_unref (toShow);
-            av_frame_free (&toShow);
+            RtspVideoStreamDecoder::freeFrame(&toShow);
         }
 
         displayFrame(convertedFrame);
 
-        av_frame_unref (convertedFrame);
-        av_frame_free (&convertedFrame);
+        RtspVideoStreamDecoder::freeFrame(&convertedFrame);
     }
     else
     {

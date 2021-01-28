@@ -16,8 +16,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
 
-//    createCamera("rtsp://:8554/test");
-    createCamera("rtsp://admin:admin@192.168.7.71:80/ch0_0.264");
+    createCamera("rtsp://:8554/test");
+//    createCamera("rtsp://admin:admin@192.168.7.71:80/ch0_0.264");
 
     return;
 }
