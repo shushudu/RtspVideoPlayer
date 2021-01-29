@@ -1,3 +1,10 @@
 /backup
 /debug
 /ui_mainwindow.h
+/release/*.obj
+/release
+/.qmake.stash
+/Makefile
+/Makefile.Debug
+/Makefile.Release
+/msvc_make.bat

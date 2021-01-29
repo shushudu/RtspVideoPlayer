@@ -39,7 +39,7 @@ public:
 
     static QString av_strerror (int errNum)
     {
-        char errBuf[AV_ERROR_MAX_STRING_SIZE];
+        char errBuf[AV_ERROR_MAX_STRING_SIZE] = {0};
         int ret = ::av_strerror (errNum, errBuf, AV_ERROR_MAX_STRING_SIZE);
 
         assert(0 == ret);

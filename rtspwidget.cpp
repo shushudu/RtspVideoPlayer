@@ -102,7 +102,11 @@ void RtspWidget::displayFrame (const AVFrame * fr)
 
     bool ret = pixmap.convertFromImage (img.scaled(QLabel::size (), Qt::KeepAspectRatio));
 
-    assert(ret);
+    if(!ret)
+    {
+        QLabel::setText("convert pixmap from image failed");
+        return;
+    }
 
 
     QLabel::setPixmap (pixmap);

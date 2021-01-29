@@ -23,3 +23,5 @@ FORMS += mainwindow.ui
 INCLUDEPATH += $$PWD/3rdparty/ffmpeg41x64/include
 LIBS += -L$$PWD/3rdparty/ffmpeg41x64/lib -lavcodec -lswscale -lavformat -lavutil
 LIBS += -L$$PWD/3rdparty/ffmpeg41x64/bin
+
+DESTDIR = $$PWD/bin
