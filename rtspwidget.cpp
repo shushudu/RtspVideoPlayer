@@ -22,6 +22,11 @@ RtspWidget::RtspWidget(QWidget *parent) : QLabel(parent)
 
 }
 
+void RtspWidget::mousePressEvent(QMouseEvent* event)
+{
+    emit clicked();
+    QLabel::mousePressEvent(event);
+}
 
 void RtspWidget::setUpdateInterval(int msec)
 {

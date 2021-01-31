@@ -27,14 +27,17 @@ public:
             assert(0);
         }
 
-        if (AV_CODEC_ID_H264 == avcp->codec_id)
-        {
-            LOGFN_INFO("AV_CODEC_ID_H264");
-        }
-        else
-        {
-            assert(0);
-        }
+
+        LOGFN_INFO(ffmpeg::avcodec_get_name(avcp->codec_id));
+    }
+
+
+
+    static QString avcodec_get_name (enum AVCodecID id)
+    {
+        const char * name = ::avcodec_get_name(id);
+        assert(name);
+        return QString(name);
     }
 
     static QString av_strerror (int errNum)
@@ -42,7 +45,11 @@ public:
         char errBuf[AV_ERROR_MAX_STRING_SIZE] = {0};
         int ret = ::av_strerror (errNum, errBuf, AV_ERROR_MAX_STRING_SIZE);
 
-        assert(0 == ret);
+        if( 0 != ret)
+        {
+            assert(0);
+            return QString("av_strerror failed for %1").arg(errNum);
+        }
 
         return QString(errBuf);
     }

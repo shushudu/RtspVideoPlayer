@@ -50,12 +50,16 @@ AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * frame, QString & err)
     }
 
     // shavlov // TEST return
-    //return frame;
+    // return frame;
 
-    if (frame->format == AV_PIX_FMT_RGB24)
+    switch (frame->format)
     {
-        return frame;
+        case AV_PIX_FMT_RGB24:
+        case AV_PIX_FMT_GRAY8:
+        //case AV_PIX_FMT_YUVJ420P: // цвет будет потерян
+            return frame;
     }
+
 
     AVFrame * rgbFrame = av_frame_alloc ();
     assert(rgbFrame);
@@ -71,14 +75,18 @@ AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * frame, QString & err)
 
     for (size_t i = 0; i < FF_ARRAY_ELEMS (rgbFrame->buf); ++i)
     {
-        av_buffer_unref (&rgbFrame->buf[i]);
-        assert (!rgbFrame->buf[i]);
+        if (rgbFrame->buf[i])
+        {
+            av_buffer_unref (&rgbFrame->buf[i]);
+            assert (!rgbFrame->buf[i]);
+        }
     }
 
 
-    int bufSize = av_image_get_buffer_size (AV_PIX_FMT_RGB24, frame->width, frame->height, 32);
+    const int bufSize = av_image_get_buffer_size (AV_PIX_FMT_RGB24, frame->width, frame->height, 32);
     if (bufSize < 0)
     {
+        err = "av_image_get_buffer_size failed";
         assert(0);
         av_frame_unref (rgbFrame);
         av_frame_free (&rgbFrame);
@@ -86,7 +94,7 @@ AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * frame, QString & err)
     }
 
 
-    AVBufferPool * bufferPool = av_buffer_pool_init (bufSize, NULL);
+    AVBufferPool * bufferPool = av_buffer_pool_init (bufSize, nullptr);
     if (!bufferPool)
     {
         assert(0);
@@ -187,6 +195,10 @@ QImage RtspVideoStreamDecoder::toQImage(const AVFrame * const fr, QString & err)
             qif = QImage::Format_Grayscale8;
             break;
 
+        case AV_PIX_FMT_YUVJ420P:
+            qif = QImage::Format_Grayscale8;
+            break;
+
         default:
         {
             err = QString("frame format %1 not supported").arg(frameFormat);
@@ -199,7 +211,7 @@ QImage RtspVideoStreamDecoder::toQImage(const AVFrame * const fr, QString & err)
 
     if(ret.isNull())
     {
-        err = QString("frame convert from format %1 failed").arg(frameFormat);
+        err = QString("frame convert from format %1 as %2 failed").arg(frameFormat).arg(qif);
         return ret;
     }
 
@@ -301,7 +313,7 @@ AVCodecContext * RtspVideoStreamDecoder::openStream (AVStream * stream, QString 
 AVStream * RtspVideoStreamDecoder::getVideoStream(AVFormatContext * fc, QString & err)
 {
     assert(fc);
-    assert(!fc->pb);
+//    assert(!fc->pb);
 
     int ret = av_find_best_stream (fc, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
     if (AVERROR_STREAM_NOT_FOUND == ret)

@@ -4,7 +4,7 @@ TARGET = RtspVideoPlayer
 
 TEMPLATE = app
 
-#PRECOMPILED_HEADER = $$PWD/header.h
+PRECOMPILED_HEADER = $$PWD/header.h
 
 HEADERS  += mainwindow.h \
         ffmpeghelpers.h \
@@ -18,10 +18,12 @@ SOURCES += main.cpp\
         rtspvideostreamdecoder.cpp \
         rtspwidget.cpp
 
-FORMS += mainwindow.ui
-
-INCLUDEPATH += $$PWD/3rdparty/ffmpeg41x64/include
-LIBS += -L$$PWD/3rdparty/ffmpeg41x64/lib -lavcodec -lswscale -lavformat -lavutil
-LIBS += -L$$PWD/3rdparty/ffmpeg41x64/bin
+INCLUDEPATH += $$PWD/3rdparty/ffmpeg-4.3.1/include
+LIBS += -L$$PWD/3rdparty/ffmpeg-4.3.1/lib -lavcodec -lswscale -lavformat -lavutil
+LIBS += -L$$PWD/3rdparty/ffmpeg-4.3.1/bin
 
 DESTDIR = $$PWD/bin
+
+RC_ICONS = icon.ico
+
+VERSION = 1.21.01.31

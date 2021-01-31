@@ -1,17 +1,16 @@
 #pragma once
 
 #include "rtspvideostreamdecoder.h"
-#include "ui_mainwindow.h"
+
+#include <QWidget>
 
 class QPushButton;
 class QLineEdit;
 class RtspWidget;
+class QHBoxLayout;
+class QVBoxLayout;
 
-namespace Ui {
-class MainWindow;
-}
-
-class MainWindow : public QMainWindow
+class MainWindow : public QWidget
 {
     Q_OBJECT
 
@@ -20,12 +19,14 @@ public:
     ~MainWindow();
 
 private:
-    Ui::MainWindow *ui;
+    QHBoxLayout * camerasLayout = nullptr;
 
     RtspWidget * rtsp_widget = nullptr;
     QLineEdit * leRtspUrl = nullptr;
     QPushButton * btnPlay = nullptr;
     QTimer * tmrReconnect = nullptr;
+    QHBoxLayout * controlBox = nullptr;
+    QVBoxLayout * rtspLoyout = nullptr;
 
     void createCamera(const QString & rtsp);
 
@@ -34,4 +35,5 @@ private slots:
     void onPlayButtonToggled(bool checked);
     void onRtspStarted();
     void onRtspStopped();
+    void onRtspClicked();
 };

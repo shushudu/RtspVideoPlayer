@@ -20,6 +20,9 @@ class RtspWidget : public QLabel
 
     int maxFrameDelay = 3000;
 
+
+    void mousePressEvent(QMouseEvent* event) override;
+
 public:
     explicit RtspWidget(QWidget *parent = nullptr);
     void setUpdateInterval(int msec);
@@ -28,6 +31,7 @@ public:
 signals:
     void started();
     void stopped();
+    void clicked();
 
 public slots:
     void start(const QString & rtsp_url);
