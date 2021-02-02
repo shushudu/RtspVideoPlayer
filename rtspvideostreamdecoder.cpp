@@ -38,6 +38,108 @@ RtspVideoStreamDecoder::RtspVideoStreamDecoder(const QString & rtspUrl):
 
 }
 
+AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * fromFrame, AVPixelFormat toFormat, int linesizeAlignment, QString & err)
+{
+    AVFrame * newFrame = av_frame_alloc ();
+    assert(newFrame);
+
+    int ret;
+
+    if ((ret = av_frame_ref (newFrame, fromFrame)) < 0)
+    {
+        assert(0);
+        av_frame_free (&newFrame);
+        return nullptr;
+    }
+
+    for (size_t i = 0; i < FF_ARRAY_ELEMS (newFrame->buf); ++i)
+    {
+        if (newFrame->buf[i])
+        {
+            av_buffer_unref (&newFrame->buf[i]);
+            assert (!rgbFrame->buf[i]);
+        }
+    }
+
+    const int bufSize = av_image_get_buffer_size (toFormat, fromFrame->width, fromFrame->height, linesizeAlignment);
+    if (bufSize < 0)
+    {
+        err = "av_image_get_buffer_size failed";
+        assert(0);
+        av_frame_unref (newFrame);
+        av_frame_free (&newFrame);
+        return nullptr;
+    }
+
+
+    AVBufferPool * bufferPool = av_buffer_pool_init (bufSize, nullptr);
+    if (!bufferPool)
+    {
+        assert(0);
+        av_frame_unref (newFrame);
+        av_frame_free (&newFrame);
+        return nullptr;
+    }
+
+    if (!(newFrame->buf[0] = av_buffer_pool_get (bufferPool)))
+    {
+        av_buffer_pool_uninit (&bufferPool);
+        assert(0);
+        av_frame_unref (newFrame);
+        av_frame_free (&newFrame);
+        return nullptr;
+    }
+
+    newFrame->format = toFormat;
+
+    ret = av_image_fill_arrays (newFrame->data
+            , newFrame->linesize
+            , newFrame->buf[0]->data
+            , AVPixelFormat (newFrame->format)
+            , fromFrame->width
+            , fromFrame->height
+            , linesizeAlignment);
+
+    if (ret < 0)
+    {
+        assert(0);
+        av_buffer_pool_uninit (&bufferPool);
+        av_frame_unref (newFrame);
+        av_frame_free (&newFrame);
+        return nullptr;
+    }
+
+    struct SwsContext * rgbSwsCtx = sws_getContext (fromFrame->width, fromFrame->height,
+                                     AVPixelFormat (fromFrame->format),
+                                     fromFrame->width, fromFrame->height, toFormat,
+                                     SWS_FAST_BILINEAR /*| SWS_AREA*/,
+                                     nullptr, nullptr, nullptr);
+    if  (!rgbSwsCtx)
+    {
+        assert(0);
+        av_buffer_pool_uninit (&bufferPool);
+        av_frame_unref (newFrame);
+        sws_freeContext (rgbSwsCtx);
+        av_frame_free (&newFrame);
+        return nullptr;
+    }
+
+    ret = sws_scale (rgbSwsCtx, fromFrame->data, fromFrame->linesize, 0, fromFrame->height,
+                                  newFrame->data, newFrame->linesize);
+    if (ret <= 0)
+    {
+        assert(0);
+        av_buffer_pool_uninit (&bufferPool);
+        av_frame_unref (newFrame);
+        sws_freeContext (rgbSwsCtx);
+        av_frame_free (&newFrame);
+        return nullptr;
+    }
+
+    av_buffer_pool_uninit (&bufferPool);
+    sws_freeContext (rgbSwsCtx);
+    return newFrame;
+}
 
 AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * frame, QString & err)
 {
@@ -60,106 +162,7 @@ AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * frame, QString & err)
             return frame;
     }
 
-
-    AVFrame * rgbFrame = av_frame_alloc ();
-    assert(rgbFrame);
-
-    int ret;
-
-    if ((ret = av_frame_ref (rgbFrame, frame)) < 0)
-    {
-        assert(0);
-        av_frame_free (&rgbFrame);
-        return nullptr;
-    }
-
-    for (size_t i = 0; i < FF_ARRAY_ELEMS (rgbFrame->buf); ++i)
-    {
-        if (rgbFrame->buf[i])
-        {
-            av_buffer_unref (&rgbFrame->buf[i]);
-            assert (!rgbFrame->buf[i]);
-        }
-    }
-
-
-    const int bufSize = av_image_get_buffer_size (AV_PIX_FMT_RGB24, frame->width, frame->height, 32);
-    if (bufSize < 0)
-    {
-        err = "av_image_get_buffer_size failed";
-        assert(0);
-        av_frame_unref (rgbFrame);
-        av_frame_free (&rgbFrame);
-        return nullptr;
-    }
-
-
-    AVBufferPool * bufferPool = av_buffer_pool_init (bufSize, nullptr);
-    if (!bufferPool)
-    {
-        assert(0);
-        av_frame_unref (rgbFrame);
-        av_frame_free (&rgbFrame);
-        return nullptr;
-    }
-
-    if (!(rgbFrame->buf[0] = av_buffer_pool_get (bufferPool)))
-    {
-        av_buffer_pool_uninit (&bufferPool);
-        assert(0);
-        av_frame_unref (rgbFrame);
-        av_frame_free (&rgbFrame);
-        return nullptr;
-    }
-
-    rgbFrame->format = AV_PIX_FMT_RGB24;
-    ret = av_image_fill_arrays (rgbFrame->data
-            , rgbFrame->linesize
-            , rgbFrame->buf[0]->data
-            , AVPixelFormat (rgbFrame->format)
-            , frame->width
-            , frame->height
-            , 32);
-
-    if (ret < 0)
-    {
-        assert(0);
-        av_buffer_pool_uninit (&bufferPool);
-        av_frame_unref (rgbFrame);
-        av_frame_free (&rgbFrame);
-        return nullptr;
-    }
-
-    struct SwsContext * rgbSwsCtx = sws_getContext (frame->width, frame->height,
-                                     AVPixelFormat (frame->format),
-                                     frame->width, frame->height, AV_PIX_FMT_RGB24,
-                                     SWS_FAST_BILINEAR /*| SWS_AREA*/,
-                                     nullptr, nullptr, nullptr);
-    if  (!rgbSwsCtx)
-    {
-        assert(0);
-        av_buffer_pool_uninit (&bufferPool);
-        av_frame_unref (rgbFrame);
-        sws_freeContext (rgbSwsCtx);
-        av_frame_free (&rgbFrame);
-        return nullptr;
-    }
-
-    ret = sws_scale (rgbSwsCtx, frame->data, frame->linesize, 0, frame->height,
-                                  rgbFrame->data, rgbFrame->linesize);
-    if (ret <= 0)
-    {
-        assert(0);
-        av_buffer_pool_uninit (&bufferPool);
-        av_frame_unref (rgbFrame);
-        sws_freeContext (rgbSwsCtx);
-        av_frame_free (&rgbFrame);
-        return nullptr;
-    }
-
-    av_buffer_pool_uninit (&bufferPool);
-    sws_freeContext (rgbSwsCtx);
-    return rgbFrame;
+    return convertFrame (frame, AVPixelFormat::AV_PIX_FMT_RGB24, 32, err);
 }
 
 

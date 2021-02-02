@@ -21,6 +21,7 @@ class RtspVideoStreamDecoder: public QThread
 public:
     RtspVideoStreamDecoder(const QString & rtspUrl);
 
+    static AVFrame * convertFrame (AVFrame * fromFrame, AVPixelFormat toFormat, int linesizeAlignment, QString & err);
     static AVFrame * convertFrame (AVFrame * frame, QString & err);
 
     static void freeFrame(AVFrame ** frame);
