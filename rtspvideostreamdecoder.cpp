@@ -57,7 +57,7 @@ AVFrame * RtspVideoStreamDecoder::convertFrame (AVFrame * fromFrame, AVPixelForm
         if (newFrame->buf[i])
         {
             av_buffer_unref (&newFrame->buf[i]);
-            assert (!rgbFrame->buf[i]);
+            assert (!newFrame->buf[i]);
         }
     }
 

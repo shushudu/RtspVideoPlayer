@@ -22,9 +22,9 @@ MainWindow::MainWindow(QWidget *parent) :
 //    createCamera("rtsp://mpv.cdn3.bigCDN.com:554/bigCDN/mp4:bigbuckbunnyiphone_400.mp4");
 //    createCamera("rtsp://freja.hiof.no:1935/rtplive/definst/hessdalen03.stream");
 //    createCamera("rtsp://:8554/test");
-//    createCamera("rtsp://admin:admin@192.168.7.71:80/ch0_0.264");
+    createCamera("rtsp://admin:admin@192.168.7.71:80/ch0_0.264");
 //    createCamera("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov");
-    createCamera("http://158.58.130.148:80/mjpg/video.mjpg");
+//    createCamera("http://158.58.130.148:80/mjpg/video.mjpg");
 
     return;
 }

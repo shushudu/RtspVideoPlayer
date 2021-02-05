@@ -1,0 +1,17 @@
+./configure --prefix=/c/ffmpeg/bin \
+--arch=x86_64 \
+--disable-logging \
+--disable-static \
+--enable-shared \
+--disable-runtime-cpudetect \
+--disable-programs \
+--disable-doc \
+--disable-avdevice \
+--disable-postproc \
+--disable-avfilter \
+--disable-encoders \
+--disable-devices \
+--disable-filters \
+--disable-debug \
+--disable-lzma \
+--disable-bzlib

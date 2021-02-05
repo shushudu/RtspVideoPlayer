@@ -18,12 +18,11 @@ SOURCES += main.cpp\
         rtspvideostreamdecoder.cpp \
         rtspwidget.cpp
 
-INCLUDEPATH += $$PWD/3rdparty/ffmpeg-4.3.1/include
-LIBS += -L$$PWD/3rdparty/ffmpeg-4.3.1/lib -lavcodec -lswscale -lavformat -lavutil
-LIBS += -L$$PWD/3rdparty/ffmpeg-4.3.1/bin
+INCLUDEPATH += $$PWD/3rdparty/ffmpeg/4.3/include
+LIBS += -L$$PWD/3rdparty/ffmpeg/4.3/bin -lavcodec -lswscale -lavformat -lavutil
 
 DESTDIR = $$PWD/bin
 
 RC_ICONS = icon.ico
 
-VERSION = 1.21.01.31
+VERSION = 1.21.02.05
