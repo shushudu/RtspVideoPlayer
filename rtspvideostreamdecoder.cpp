@@ -368,6 +368,12 @@ AVFormatContext * RtspVideoStreamDecoder::openRtsp (const QString & rtsp_url, QS
 //        int ret = av_dict_set (&format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
 //        assert(ret>=0);
 
+
+    fc->flags |= AVFMT_FLAG_DISCARD_CORRUPT;
+    LOGFN_INFO(QString("open demuxer flags: 0x%1").arg(QString::number(fc->flags, 16)));
+
+
+    assert(!fc->iformat);
     int ret = avformat_open_input (&fc, rtsp_url.toUtf8 ().constData (), nullptr, &format_opts);
 
     av_dict_free (&format_opts);
@@ -380,8 +386,18 @@ AVFormatContext * RtspVideoStreamDecoder::openRtsp (const QString & rtsp_url, QS
     }
 
     assert (fc);
+    LOGFN_INFO(QString("number of streams: %1").arg(fc->nb_streams));
+
+
+
+    assert(fc->iformat);
+    LOGFN_INFO(QString("input format name: %1").arg(fc->iformat->name));
+    LOGFN_INFO(QString("input format flags: %1").arg(fc->iformat->flags));
 
 //        av_format_inject_global_side_data (fc);
+
+    AVStream *stream = fc->streams[0];
+
 
     return fc;
 }
@@ -445,7 +461,12 @@ bool RtspVideoStreamDecoder::startReceiveFrames (AVFormatContext * fc, AVStream 
                   && !(videoStream->disposition & AV_DISPOSITION_ATTACHED_PIC)
                   )
         {
-            sendPacketToDecoder(avCtx, &pkt);
+            if (!sendPacketToDecoder(avCtx, &pkt, err))
+            {
+                av_packet_unref (&pkt);
+                return false;
+            }
+
             av_packet_unref (&pkt);
 
             AVFrame * frame = av_frame_alloc ();
@@ -483,11 +504,8 @@ bool RtspVideoStreamDecoder::frameFromDecoder(AVCodecContext * avCtx, AVFrame * 
     switch (res)
     {
     case 0:
-        {
-            assert(frame);
-            return true;
-        }
-        break;
+        assert(frame);
+        return true;
 
     case AVERROR (EAGAIN):
         LOGFN_INFO("no frames, try again");
@@ -506,7 +524,7 @@ bool RtspVideoStreamDecoder::frameFromDecoder(AVCodecContext * avCtx, AVFrame * 
 }
 
 
-bool RtspVideoStreamDecoder::sendPacketToDecoder(AVCodecContext * avCtx, AVPacket * pck)
+bool RtspVideoStreamDecoder::sendPacketToDecoder(AVCodecContext * avCtx, AVPacket * pck, QString & err)
 {
     assert(pck);
     assert(avCtx);
@@ -531,7 +549,8 @@ bool RtspVideoStreamDecoder::sendPacketToDecoder(AVCodecContext * avCtx, AVPacke
     }
     else
     {
-        assert(0);
+        err = ffmpeg::av_strerror(ret);
+        return false;
     }
 
     return false;

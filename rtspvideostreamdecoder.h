@@ -53,7 +53,7 @@ private:
 
     bool frameFromDecoder(AVCodecContext * avCtx, AVFrame * frame);
 
-    bool sendPacketToDecoder(AVCodecContext * avCtx, AVPacket * pck);
+    bool sendPacketToDecoder(AVCodecContext * avCtx, AVPacket * pck, QString & err);
 
     bool openAndStartRtsp(QString & err);
 };
