@@ -12,26 +12,57 @@ extern "C" {
 class ffmpeg
 {
 public:
-
-
-    static void dumpAVCodecParameters (AVCodecParameters * avcp)
+    static void dump (AVFormatContext * fc, const QString & tabs = "")
     {
-        assert (avcp);
-
-        if (AVMEDIA_TYPE_VIDEO == avcp->codec_type)
+        if (fc)
         {
-            LOGFN_INFO("AVMEDIA_TYPE_VIDEO");
-        }
-        else
-        {
-            assert(0);
-        }
+            LOGFN_INFO(QString("%1open demuxer flags: 0x%2").arg(tabs).arg(QString::number(fc->flags, 16)));
+            LOGFN_INFO(QString("%1number of streams: %2").arg(tabs).arg(fc->nb_streams));
 
+            for (size_t i=0; i<fc->nb_streams; ++i)
+            {
+                LOGFN_INFO(QString("%1stream %2:").arg(tabs).arg(i));
+                dump(fc->streams[i], tabs + "  ");
+            }
 
-        LOGFN_INFO(ffmpeg::avcodec_get_name(avcp->codec_id));
+            AVInputFormat * iformat = fc->iformat;
+            if (iformat)
+            {
+                LOGFN_INFO(QString("%1input format:").arg(tabs));
+                ffmpeg::dump(iformat, tabs + "  ");
+            }
+        }
     }
 
 
+    static void dump (AVCodecParameters * codecpar, const QString & tabs = "")
+    {
+        if (codecpar)
+        {
+            LOGFN_INFO(QString("%1stream codec type: %2").arg(tabs).arg(av_get_media_type_string(codecpar->codec_type)));
+            LOGFN_INFO(QString("%1codec name: %2").arg(tabs).arg(avcodec_get_name(codecpar->codec_id)));
+        }
+    }
+
+
+    static void dump (AVInputFormat * iformat, const QString & tabs = "")
+    {
+        if (iformat)
+        {
+            LOGFN_INFO(QString("%1input format name: %2").arg(tabs).arg(iformat->name));
+            LOGFN_INFO(QString("%1input format flags: %2").arg(tabs).arg(iformat->flags));
+        }
+    }
+
+    static void dump (AVStream * stream, const QString & tabs = "")
+    {
+        if (stream)
+        {
+            AVCodecParameters *codecpar = stream->codecpar;
+            assert(codecpar);
+            ffmpeg::dump(codecpar, tabs + "  ");
+        }
+    }
 
     static QString avcodec_get_name (enum AVCodecID id)
     {
@@ -47,7 +78,6 @@ public:
 
         if( 0 != ret)
         {
-            assert(0);
             return QString("av_strerror failed for %1").arg(errNum);
         }
 

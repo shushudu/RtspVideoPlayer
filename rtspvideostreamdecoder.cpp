@@ -344,7 +344,7 @@ AVStream * RtspVideoStreamDecoder::getVideoStream(AVFormatContext * fc, QString 
 
     AVStream * videoStream = fc->streams[usedStreamIndex];
 
-    ffmpeg::dumpAVCodecParameters (videoStream->codecpar);
+    ffmpeg::dump (videoStream->codecpar);
 
     return videoStream;
 }
@@ -370,7 +370,7 @@ AVFormatContext * RtspVideoStreamDecoder::openRtsp (const QString & rtsp_url, QS
 
 
     fc->flags |= AVFMT_FLAG_DISCARD_CORRUPT;
-    LOGFN_INFO(QString("open demuxer flags: 0x%1").arg(QString::number(fc->flags, 16)));
+    ffmpeg::dump(fc);
 
 
     assert(!fc->iformat);
@@ -386,19 +386,9 @@ AVFormatContext * RtspVideoStreamDecoder::openRtsp (const QString & rtsp_url, QS
     }
 
     assert (fc);
-    LOGFN_INFO(QString("number of streams: %1").arg(fc->nb_streams));
+    ffmpeg::dump(fc);
 
-
-
-    assert(fc->iformat);
-    LOGFN_INFO(QString("input format name: %1").arg(fc->iformat->name));
-    LOGFN_INFO(QString("input format flags: %1").arg(fc->iformat->flags));
-
-//        av_format_inject_global_side_data (fc);
-
-    AVStream *stream = fc->streams[0];
-
-
+    //        av_format_inject_global_side_data (fc);
     return fc;
 }
 
