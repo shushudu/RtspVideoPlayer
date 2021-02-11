@@ -363,14 +363,16 @@ AVFormatContext * RtspVideoStreamDecoder::openRtsp (const QString & rtsp_url, QS
 
     fc->interrupt_callback.callback = interruptCallback;
     fc->interrupt_callback.opaque = this;
+    fc->max_picture_buffer = 1024*1024;
+    fc->flags |= AVFMT_FLAG_DISCARD_CORRUPT;
+    ffmpeg::dump(fc);
 
     AVDictionary * format_opts = nullptr;
 //        int ret = av_dict_set (&format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
 //        assert(ret>=0);
 
 
-    fc->flags |= AVFMT_FLAG_DISCARD_CORRUPT;
-    ffmpeg::dump(fc);
+
 
 
     assert(!fc->iformat);
@@ -388,7 +390,7 @@ AVFormatContext * RtspVideoStreamDecoder::openRtsp (const QString & rtsp_url, QS
     assert (fc);
     ffmpeg::dump(fc);
 
-    //        av_format_inject_global_side_data (fc);
+    av_format_inject_global_side_data (fc);
     return fc;
 }
 

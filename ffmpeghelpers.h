@@ -16,14 +16,21 @@ public:
     {
         if (fc)
         {
+            LOGFN_INFO(QString("%1url: 0x%2").arg(tabs).arg(fc->url));
             LOGFN_INFO(QString("%1open demuxer flags: 0x%2").arg(tabs).arg(QString::number(fc->flags, 16)));
-            LOGFN_INFO(QString("%1number of streams: %2").arg(tabs).arg(fc->nb_streams));
+            LOGFN_INFO(QString("%1forced video codec id: %2").arg(tabs).arg(QString::number(fc->video_codec_id, 10)));
 
-            for (size_t i=0; i<fc->nb_streams; ++i)
+            LOGFN_INFO(QString("%1flags signalling stream properties: 0x%2").arg(tabs).arg(QString::number(fc->ctx_flags, 16)));
+            if (fc->ctx_flags & AVFMTCTX_NOHEADER)
             {
-                LOGFN_INFO(QString("%1stream %2:").arg(tabs).arg(i));
-                dump(fc->streams[i], tabs + "  ");
+                LOGFN_INFO(QString("%1ctx_flags: AVFMTCTX_NOHEADER").arg(tabs));
             }
+            if (fc->ctx_flags & AVFMTCTX_UNSEEKABLE)
+            {
+                LOGFN_INFO(QString("%1ctx_flags: AVFMTCTX_UNSEEKABLE").arg(tabs));
+            }
+
+
 
             AVInputFormat * iformat = fc->iformat;
             if (iformat)
@@ -31,9 +38,18 @@ public:
                 LOGFN_INFO(QString("%1input format:").arg(tabs));
                 ffmpeg::dump(iformat, tabs + "  ");
             }
+
+
+            LOGFN_INFO(QString("%1number of streams: %2").arg(tabs).arg(fc->nb_streams));
+            for (size_t i=0; i<fc->nb_streams; ++i)
+            {
+                LOGFN_INFO(QString("%1stream %2:").arg(tabs).arg(i));
+                dump(fc->streams[i], tabs + "  ");
+            }
+
+
         }
     }
-
 
     static void dump (AVCodecParameters * codecpar, const QString & tabs = "")
     {
@@ -44,13 +60,52 @@ public:
         }
     }
 
-
     static void dump (AVInputFormat * iformat, const QString & tabs = "")
     {
         if (iformat)
         {
             LOGFN_INFO(QString("%1input format name: %2").arg(tabs).arg(iformat->name));
             LOGFN_INFO(QString("%1input format flags: %2").arg(tabs).arg(iformat->flags));
+            if (iformat->flags & AVFMT_NOFILE)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_NOFILE").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_NEEDNUMBER)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_NEEDNUMBER").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_SHOW_IDS)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_SHOW_IDS").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_NOTIMESTAMPS)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_NOTIMESTAMPS").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_GENERIC_INDEX)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_GENERIC_INDEX").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_TS_DISCONT)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_TS_DISCONT").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_NOBINSEARCH)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_NOBINSEARCH").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_NOGENSEARCH)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_NOGENSEARCH").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_NO_BYTE_SEEK)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_NO_BYTE_SEEK").arg(tabs));
+            }
+            if (iformat->flags & AVFMT_SEEK_TO_PTS)
+            {
+                LOGFN_INFO(QString("%1flags: AVFMT_SEEK_TO_PTS").arg(tabs));
+            }
         }
     }
 

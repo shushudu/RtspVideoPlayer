@@ -3,7 +3,6 @@
 --disable-logging \
 --disable-static \
 --enable-shared \
---disable-runtime-cpudetect \
 --disable-programs \
 --disable-doc \
 --disable-avdevice \
