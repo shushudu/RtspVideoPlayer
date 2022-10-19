@@ -1,4 +1,4 @@
-./configure --prefix=/c/ffmpeg/bin \
+./configure --prefix=$PWD/bin \
 --arch=x86_64 \
 --disable-logging \
 --disable-static \
